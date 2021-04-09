@@ -32,10 +32,6 @@ GUI_speed_x = args.speed_x
 GUI_speed_y = args.speed_y
 run_duration = args.duration #number of seconds
 
-# GUI_speed_x = 1
-# GUI_speed_y = 1
-# run_duration = 5
-
 #%% Setup and Calculations
 epoch_count = int(run_duration // epoch_length)
 sample_count = int(fs * epoch_length)

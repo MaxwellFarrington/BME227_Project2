@@ -15,24 +15,26 @@ import argparse
 
 #%% Definitions
 parser = argparse.ArgumentParser(description='Read live data from serial port in order to move the mouse')
-parser.add_argument('--speed_x', type=float, required=True)
-# parser.add_argument('speed_y', dest='speed_y', action='store_const', default = 1 , type=float, help='Y axis Multiplier (default is 1.0)')
+parser.add_argument('speed_x', type=float, help='X axis Multiplier (default is 1.0)', default = 1.0)
+parser.add_argument('speed_y', type=float, help='Y axis Multiplier (default is 1.0)', default = 1.0)
+parser.add_argument('duration', type=float, help='duration of mouse control', default = 10)
+
 args = parser.parse_args()
 
 channel_count = 3
 fs = 500 #per second
 epoch_length = 0.200 #seconds
-tshld = [1, 0, 1] # Left Leg, Right Leg, Arm
+tshld = [0.00008, 0.00006, 10] # Left Leg, Right Leg, Arm
 com_port='/dev/cu.usbserial-1430'
 pyautogui.PAUSE = 0
 
-# GUI_speed_x = args.speed_x
-# GUI_speed_y = args.speed_y
-# run_duration = args.duration #number of seconds
+GUI_speed_x = args.speed_x
+GUI_speed_y = args.speed_y
+run_duration = args.duration #number of seconds
 
-GUI_speed_x = 1
-GUI_speed_y = 1
-run_duration = 5
+# GUI_speed_x = 1
+# GUI_speed_y = 1
+# run_duration = 5
 
 #%% Setup and Calculations
 epoch_count = int(run_duration // epoch_length)

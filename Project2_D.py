@@ -13,77 +13,79 @@ import time
 import pyautogui
 import argparse
 
-#%% Definitions
-parser = argparse.ArgumentParser(description='Read live data from serial port in order to move the mouse')
-parser.add_argument('speed_x', type=float, help='X axis Multiplier (default is 1.0)', default = 1.0)
-parser.add_argument('speed_y', type=float, help='Y axis Multiplier (default is 1.0)', default = 1.0)
-parser.add_argument('duration', type=float, help='duration of mouse control', default = 10)
-
-args = parser.parse_args()
-
-channel_count = 3
-fs = 500 #per second
-epoch_length = 0.200 #seconds
-tshld = [0.00008, 0.00006, 10] # Left Leg, Right Leg, Arm
-com_port='/dev/cu.usbserial-1430'
-pyautogui.PAUSE = 0
-
-GUI_speed_x = args.speed_x
-GUI_speed_y = args.speed_y
-run_duration = args.duration #number of seconds
-
-#%% Setup and Calculations
-epoch_count = int(run_duration // epoch_length)
-sample_count = int(fs * epoch_length)
-sample_data = np.empty((int(sample_count),channel_count)) # An array of nans in which each row is a sample and each column is a channel
-
-#%% Define Mouse movements
-
-def GUI_rest(): # 'rest'
-    print('rest')
+def HMI_GUI_control():
+    # Definitions
+    channel_count = 3
+    fs = 500 #per second
+    epoch_length = 0.200 #seconds
+    tshld = [0.00006, 0.00006, 0.00006] # Left Leg, Right Leg, Arm
+    com_port='/dev/cu.usbserial-1430'
+    pyautogui.PAUSE = 0
     
-def GUI_left():# 'left'
-    print('left')
-    pyautogui.moveRel(-40 * GUI_speed_x, 0 , duration = 0)
+    GUI_speed_x = args.speed_x
+    GUI_speed_y = args.speed_y
+    run_duration = args.duration #number of seconds
     
-def GUI_right():# 'right'
-    print('right')
-    pyautogui.moveRel(40 * GUI_speed_x, 0 , duration = 0)
+    # Setup and Calculations
+    epoch_count = int(run_duration // epoch_length)
+    sample_count = int(fs * epoch_length)
+    sample_data = np.empty((int(sample_count),channel_count)) # An array of nans in which each row is a sample and each column is a channel
     
-def GUI_up():# 'up'
-    print('up')
-    pyautogui.moveRel(0, -20 * GUI_speed_y, duration = 0)
+    # Define Mouse movements
+    def GUI_rest(): # 'rest'
+        print('rest')
+        
+    def GUI_left():# 'left'
+        print('left')
+        pyautogui.moveRel(-40 * GUI_speed_x, 0 , duration = 0)
+        
+    def GUI_right():# 'right'
+        print('right')
+        pyautogui.moveRel(40 * GUI_speed_x, 0 , duration = 0)
+        
+    def GUI_up():# 'up'
+        print('up')
+        pyautogui.moveRel(0, -20 * GUI_speed_y, duration = 0)
+        
+    def GUI_down():# 'down'
+        print('down')
+        pyautogui.moveRel(0, 20 * GUI_speed_y, duration = 0)
+        
+    def GUI_click():# 'click'
+        print('click')
+        pyautogui.click(clicks=1, button='left')
     
-def GUI_down():# 'down'
-    print('down')
-    pyautogui.moveRel(0, 20 * GUI_speed_y, duration = 0)
     
-def GUI_click():# 'click'
-    print('click')
-    pyautogui.click(clicks=1, button='left')
+    def select_case(argument): # Dictionary to Define actions to take given channel_predicted's state
+        switcher = {
+        '[False False False]':GUI_rest,
+        '[ True False False]':GUI_rest,
+        '[False  True  True]':GUI_rest,
+        '[False  True False]':GUI_left,
+        '[False False  True]':GUI_right,
+        '[ True  True False]':GUI_down,
+        '[ True False  True]':GUI_up,
+        '[ True  True  True]':GUI_click,
+        }
+        return switcher.get(str(argument), 'not_found')
+    print(f'Mouse control will run for {run_duration} seconds')
+    time.sleep(3)
+    print('Starting...')
+    
+    seconds = 3
+    for i in range(3):
+        print (seconds)
+        seconds -= 1
+        time.sleep(1)
+    print('...\n')
 
-
-def select_case(argument): # Dictionary to Define actions to take given channel_predicted's state
-    switcher = {
-    '[False False False]':GUI_rest,
-    '[False False  True]':GUI_rest,
-    '[ True  True False]':GUI_rest,
-    '[ True False False]':GUI_left,
-    '[False  True False]':GUI_right,
-    '[False  True  True]':GUI_up,
-    '[ True False  True]':GUI_down,
-    '[ True  True  True]':GUI_click,
-    }
-    return switcher.get(str(argument), 'not_found')
-
-#%% Define Main Loop
-def EMG_mouse_move(epoch_count):
-    global channel_predicted
+    # Open serial port
+    arduino_data = serial.Serial(port=com_port,baudrate=500000)
     for epoch_index in range(epoch_count):
         now = time.time()
         # Reset data with NaNs
         sample_data[:] = np.NaN 
- # Open serial port
+ 
         
         for sample_index in range(int(sample_count)): # For every sample I expect to receive:
             try:
@@ -91,7 +93,8 @@ def EMG_mouse_move(epoch_count):
                 arduino_list = np.array(arduino_string.split(),dtype=int)  
                 sample_data[sample_index] = arduino_list[1:channel_count+1] * 5/1024
             except:
-                print('Serial Read Error')  
+                pass
+                # print('Serial Read Error')  
         emg_var =  np.transpose(np.nanvar(sample_data,axis=0))
         channel_predicted = emg_var > tshld
         
@@ -102,9 +105,15 @@ def EMG_mouse_move(epoch_count):
             time.sleep(0.2-elapsed)
         except:
             print('timing error')
+    arduino_data.close()
 #%% Run code
-arduino_data = serial.Serial(port=com_port,baudrate=500000)
-EMG_mouse_move(epoch_count)
-arduino_data.close()
+parser = argparse.ArgumentParser(description='Read live data from serial port in order to move the mouse')
+parser.add_argument('speed_x', type=float, default = 1.0, help='X axis Multiplier (default is 1.0)')
+parser.add_argument('speed_y', type=float, default = 1.0, help='Y axis Multiplier (default is 1.0)')
+parser.add_argument('duration', type=float, default = 10, help='duration of mouse control')
+
+args = parser.parse_args()
+
+HMI_GUI_control()
 
 

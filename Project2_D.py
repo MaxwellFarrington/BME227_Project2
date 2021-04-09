@@ -18,7 +18,7 @@ def HMI_GUI_control():
     channel_count = 3
     fs = 500 #per second
     epoch_length = 0.200 #seconds
-    tshld = [0.00006, 0.00006, 0.00006] # Left Leg, Right Leg, Arm
+    tshld = [0.00006, 0.00006, 0.00006] #  Arm, Left Leg, Right Leg
     com_port='/dev/cu.usbserial-1430'
     pyautogui.PAUSE = 0
     

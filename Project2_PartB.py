@@ -314,7 +314,7 @@ parser.add_argument('-cp', '--com_port', type = str, default = 'COM4', help = 'I
 parser.add_argument('-rd', '--recording_duration', type = float,default = 60,  help = 'Input the recording duration')
 parser.add_argument('-nc', '--n_channels', type = int, default = 3, help = 'Input the number of channels')
 parser.add_argument('-fs', '--fs', type = float, default = 500, help = 'Input the frequency of arduino')
-parser.add_argument('-of', '--out_folder', type = str, default = 'Proj1_DataOutput', help = 'Input the output folder path')
+parser.add_argument('-of', '--out_folder', type = str, default = 'Proj2_DataOutput', help = 'Input the output folder path')
 parser.add_argument('-save', '--save', default = 'yes', 
                 help = 'Save the figure and data input? (yes or no)')   
     
